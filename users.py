@@ -15,12 +15,12 @@ users_api = Blueprint('users_api', __name__)
 def login():
     form = forms.Login(request.form)
     if request.method == "POST" and form.validate():
-        query = "SELECT * FROM users WHERE username=%s AND password=hash"
+        query = "SELECT * FROM users WHERE username=%s AND password=%s"
         username = form.username.data
         password = form.password.data
 
         salt = config.SALT + username
-        hash = pbkdf2_hmac("sha256", password, salt, 100000)
+        hash = pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000)
 
         g.cursor.execute(query, [username, hash])
         row = g.cursor.fetchone()
@@ -40,7 +40,7 @@ def register():
     if request.method == "POST" and form.validate():
         username = form.username.data
         salt = config.SALT + username
-        hash = pbkdf2_hmac("sha256", form.password.data, salt, 100000)
+        hash = pbkdf2_hmac("sha256", form.password.data.encode(), salt.encode(), 100000)
 
         user = models.User(
             username=username,
@@ -68,11 +68,11 @@ def password():
         query = "SELECT * FROM users WHERE id=%s"
         user = models.get_or_404(query, [g.user.id], models.User)
         salt = config.SALT + user.username
-        hash = pbkdf2_hmac("sha256", form.password.data, salt, 100000)
+        hash = pbkdf2_hmac("sha256", form.password.data.encode(), salt.encode(), 100000)
         user.password = hash
         user.update()
 
-        return redirect("/" + str(user.id))
+        return redirect(url_for('index'))
 
     return render_template('edit_user.html', form=form)
 

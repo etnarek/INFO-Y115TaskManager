@@ -9,6 +9,8 @@ import markdown
 from ressources import connect_db, auth_required
 
 from users import users_api
+from task import task_api
+import forms
 
 
 app = Flask(__name__)
@@ -55,18 +57,19 @@ def inject_user():
 
 
 app.register_blueprint(users_api, url_prefix='/users')
+app.register_blueprint(task_api, url_prefix='/task')
 
 
 @app.route("/")
 @auth_required
 def index():
     query = """
-    SELECT task.* from task ORDER BY creation
+    SELECT task.* from task WHERE user_id=%s ORDER BY created
     """
 
-    tasks = models.list_of(query, [], models.Task)
+    tasks = models.list_of(query, [g.user.id], models.Task)
 
-    return render_template('index.html', tasks=tasks)
+    return render_template('index.html', tasks=tasks, taskForm=forms.Task())
 
 
 @app.template_filter('humanize_date')

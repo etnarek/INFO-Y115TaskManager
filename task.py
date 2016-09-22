@@ -6,26 +6,26 @@ import models
 from ressources import auth_required
 
 
-comment_api = Blueprint('task_api', __name__)
+task_api = Blueprint('task_api', __name__)
 
 
-@comment_api.route("/add/", methods=["POST"])
+@task_api.route("/add/", methods=["POST"])
 @auth_required
-def add_comment(epk, uid):
+def add_task():
     form = forms.Task(request.form)
     if request.method == 'POST' and form.validate():
         task = models.Task()
         form.populate_obj(task)
 
-        task.user_id = uid
+        task.user_id = g.user.id
         task.insert(g.cursor)
 
     return redirect(url_for('index'))
 
 
-@comment_api.route("/edit/<int:tid>", methods=["GET", "POST"])
+@task_api.route("/edit/<int:tid>", methods=["GET", "POST"])
 @auth_required
-def edit_comment(tid):
+def edit_task(tid):
     query = """
     SELECT {} FROM task
     WHERE task.id=%s
@@ -38,14 +38,14 @@ def edit_comment(tid):
 
     task = models.Task.from_dict(data)
     uid = task.user_id
-    date = task.date
+    created = task.created
 
     if g.user.id == uid:
         form = forms.Task(request.form, obj=task)
         if request.method == 'POST' and form.validate():
             form.populate_obj(task)
             task.user_id = uid
-            task.date = date
+            task.created = created
             task.update(g.cursor)
             return redirect(url_for('index'))
     else:
@@ -54,7 +54,7 @@ def edit_comment(tid):
     return render_template('edit_task.html', form=form)
 
 
-@comment_api.route("/delete/<int:tid>")
+@task_api.route("/delete/<int:tid>")
 @auth_required
 def delete(tid):
     queryGet = """
@@ -76,5 +76,5 @@ def delete(tid):
 
     if g.user.id == uid:
         g.cursor.execute(queryDel, [tid])
-        return redirect("index")
+        return redirect(url_for('index'))
     return abort(401)

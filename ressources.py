@@ -11,7 +11,7 @@ def auth_required(fn):
         if g.user.is_authenticated():
             return fn(*args, **kwargs)
         else:
-            return redirect(url_for('login'))
+            return redirect(url_for('users_api.login'))
     return outer
 
 
