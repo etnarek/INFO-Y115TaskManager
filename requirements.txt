@@ -2,4 +2,5 @@ flask
 psycopg2
 flask_bootstrap
 flask_wtf
-pbkdf2
+humanize
+markdown
