@@ -18,7 +18,7 @@
       <ul class="nav navbar-nav navbar-right">
         {% if user.is_authenticated() %}
         <li><a href="{{ url_for("users_api.password") }}">
-            <i class="fa fa-user"></i> {{user.username}}(change password)
+            <i class="fa fa-user"></i> {{user.username|e}}(change password)
           </a></li>
           <li><a href="/users/logout">
             <i class="fa fa-sign-out" ></i> Déconnexion
