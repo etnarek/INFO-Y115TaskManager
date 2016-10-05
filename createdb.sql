@@ -9,7 +9,7 @@ CREATE INDEX ON "users" (username, password);
 
 CREATE TABLE "task" (
   "id" SERIAL PRIMARY KEY,
-  "text" VARCHAR(510) NOT NULL UNIQUE,
+  "text" VARCHAR(510) NOT NULL,
   "created" DATE NOT NULL,
   "user_id" INTEGER NOT NULL REFERENCES "users" ON DELETE CASCADE
 );

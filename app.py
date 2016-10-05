@@ -6,7 +6,7 @@ import humanize
 from datetime import date, timedelta
 import markdown
 
-from ressources import connect_db, auth_required
+from ressources import connect_db, auth_required, get_userID
 
 from users import users_api
 from task import task_api
@@ -24,13 +24,25 @@ def open_db():
     g.cursor = g.db.cursor()
 
 
+@app.after_request
+def call_after_request_callbacks(response):
+    for callback in getattr(g, 'after_request_callbacks', ()):
+        callback(response)
+    return response
+
+
 @app.before_request
 def get_user_cookie():
-    if "user_id" in session:
+    user_id = get_userID()
+    if user_id:
         query = "SELECT * FROM users WHERE id=%s"
-        g.cursor.execute(query, [session['user_id']])
-        user = models.User.from_dict(g.cursor.fetchone())
-        g.user = user
+        g.cursor.execute(query, [user_id])
+        user = g.cursor.fetchone()
+        if user:
+            user = models.User.from_dict(user)
+            g.user = user
+        else:
+            g.user = models.AnonymousUser()
     else:
         g.user = models.AnonymousUser()
 

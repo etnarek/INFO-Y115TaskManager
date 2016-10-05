@@ -1,14 +1,26 @@
-from flask import Blueprint, render_template, request, g, redirect, url_for, session
+from flask import Blueprint, render_template, request, g, redirect, url_for, make_response
 import psycopg2
 import psycopg2.extras
 import forms
 import config
 import models
 from hashlib import pbkdf2_hmac
+import hmac
+import hashlib
+from ressources import after_this_request
 
-from ressources import auth_required
+from ressources import auth_required, get_userID
 
 users_api = Blueprint('users_api', __name__)
+
+
+def set_userID(user_id):
+    hashh = hmac.new(config.SECRET.encode(), str(user_id).encode(), hashlib.sha512).hexdigest()
+
+    @after_this_request
+    def set_id_cookie(response):
+        response.set_cookie('user_id', str(user_id))
+        response.set_cookie('hash', hashh)
 
 
 @users_api.route("/login", methods=['GET', 'POST'])
@@ -26,7 +38,7 @@ def login():
         row = g.cursor.fetchone()
         if row:
             user = models.User.from_dict(row)
-            session['user_id'] = user.id
+            set_userID(user.id)
             return redirect(url_for('index'))
         else:
             form.username.errors.append("Couple utilisateur/mot de passe inconnu")
@@ -55,7 +67,7 @@ def register():
             if "(email)" in str(e):
                 form.email.errors.append("Cet email est déjà utilisé par un autre utilisateur")
         else:
-            session['user_id'] = user.id
+            set_userID(user.id)
             return redirect(url_for('index'))
     return render_template('register.html', form=form)
 
@@ -79,6 +91,9 @@ def password():
 
 @users_api.route("/logout")
 def logout():
-    if "user_id" in session:
-        del session['user_id']
-    return redirect(url_for('index'))
+    user_id = get_userID()
+    resp = make_response(redirect(url_for('index')))
+    if user_id:
+        resp.set_cookie('user_id', "", expires=0)
+        resp.set_cookie('hash', "", expires=0)
+    return resp
