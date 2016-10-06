@@ -11,11 +11,12 @@ class Login(Form):
 
 
 class User(Form):
-    username = TextField("Nom d'utilisateur")
-    email = EmailField("Adresse mail")
+    username = TextField("Nom d'utilisateur", [validators.Length(min=6, max=250)])
+    email = EmailField("Adresse mail", [validators.DataRequired(), validators.Email(), validators.Length(max=250)])
     password = PasswordField('Mot de passe', [
         validators.Required(),
-        validators.EqualTo('confirm', message='Les mots de passe doivent être identiques')
+        validators.EqualTo('confirm', message='Les mots de passe doivent être identiques'),
+        validators.Length(min=8)
     ])
     confirm = PasswordField('Mot de passe (à nouveau)')
 
@@ -25,7 +26,8 @@ class User(Form):
 class PasswordUser(Form):
     password = PasswordField('Mot de passe', [
         validators.Required(),
-        validators.EqualTo('confirm', message='Les mots de passe doivent être identiques')
+        validators.EqualTo('confirm', message='Les mots de passe doivent être identiques'),
+        validators.Length(min=8)
     ])
     confirm = PasswordField('Mot de passe (à nouveau)')
 
