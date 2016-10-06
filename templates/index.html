@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Task Manager{% endblock %}
+{% block content %}
+
+<h3>Add task:</h3>
+{% import "bootstrap/wtf.html" as wtf %}
+{{wtf.quick_form(taskForm, action="task/add/", form_type="inline")}}
+
+</br>
+
+{% for task in tasks %}
+<div class="panel panel-default">
+    <div class="panel-body">
+        {{task.text|e}}
+    </div>
+    <div class="panel-footer">
+        <a href="{{ url_for("task_api.edit_task", tid=task.id) }}" class="btn btn-warning" role="button">Edit</a>
+        <a href="{{ url_for("task_api.delete", tid=task.id) }}" class="btn btn-danger" role="button">delete</a>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
