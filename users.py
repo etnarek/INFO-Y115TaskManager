@@ -94,7 +94,7 @@ def password():
     return render_template('edit_user.html', form=form)
 
 
-@users_api.route("/logout")
+@users_api.route("/logout", methods=["POST"])
 def logout():
     token = get_token()
     resp = make_response(redirect(url_for('index')))
