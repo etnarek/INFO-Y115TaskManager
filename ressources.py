@@ -24,15 +24,16 @@ def auth_required(fn):
     return outer
 
 
-def get_userID():
-    user_id = request.cookies.get('user_id')
-    hashmac = request.cookies.get('hash')
+def get_token():
+    return request.cookies.get('token')
 
-    if user_id and hashmac:
-        digest = hmac.new(config.SECRET.encode(), user_id.encode(), hashlib.sha512).hexdigest()
-        if hmac.compare_digest(hashmac, digest):
-            return int(user_id)
-    return None
+
+def get_random_string(length=64,
+                      allowed_chars='abcdefghijklmnopqrstuvwxyz'
+                      'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'):
+    import random
+    random = random.SystemRandom()
+    return ''.join(random.choice(allowed_chars) for i in range(length))
 
 
 def connect_db():
