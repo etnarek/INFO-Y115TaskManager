@@ -1,4 +1,5 @@
-from flask import Flask, render_template, g, session, Markup
+from flask import Flask, render_template, g, Markup
+from flask_wtf.csrf import CsrfProtect
 from flask_bootstrap import Bootstrap
 import config
 import models
@@ -6,7 +7,7 @@ import humanize
 from datetime import date, timedelta
 import markdown
 
-from ressources import connect_db, auth_required, get_userID
+from ressources import connect_db, auth_required, get_token
 
 from users import users_api
 from task import task_api
@@ -15,6 +16,7 @@ import forms
 
 app = Flask(__name__)
 app.secret_key = config.SECRET
+csfr = CsrfProtect(app)
 Bootstrap(app)
 
 
@@ -33,10 +35,10 @@ def call_after_request_callbacks(response):
 
 @app.before_request
 def get_user_cookie():
-    user_id = get_userID()
-    if user_id:
-        query = "SELECT * FROM users WHERE id=%s"
-        g.cursor.execute(query, [user_id])
+    token = get_token()
+    if token:
+        query = "SELECT %s FROM users JOIN token ON id=user_id WHERE token=%%s" % models.User.star()
+        g.cursor.execute(query, [token])
         user = g.cursor.fetchone()
         if user:
             user = models.User.from_dict(user)

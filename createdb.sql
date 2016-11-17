@@ -13,3 +13,8 @@ CREATE TABLE "task" (
   "created" DATE NOT NULL,
   "user_id" INTEGER NOT NULL REFERENCES "users" ON DELETE CASCADE
 );
+
+CREATE TABLE "token" (
+    "token" VARCHAR(64) NOT NULL UNIQUE,
+    "user_id" INTEGER NOT NULL REFERENCES "users" ON DELETE CASCADE
+);

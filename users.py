@@ -5,22 +5,26 @@ import forms
 import config
 import models
 from hashlib import pbkdf2_hmac
-import hmac
-import hashlib
-from ressources import after_this_request
 
-from ressources import auth_required, get_userID
+from ressources import auth_required, get_random_string, get_token, after_this_request
 
 users_api = Blueprint('users_api', __name__)
 
 
-def set_userID(user_id):
-    hashh = hmac.new(config.SECRET.encode(), str(user_id).encode(), hashlib.sha512).hexdigest()
+def gen_token(user_id):
+    ok = False
+    while not ok:
+        try:
+            token = get_random_string()
+            token_querry = "INSERT INTO token (token, user_id) VALUES (%s, %s)"
+            g.cursor.execute(token_querry, [token, user_id])
+            ok = True
+        except psycopg2.IntegrityError as e:
+            pass
 
     @after_this_request
     def set_id_cookie(response):
-        response.set_cookie('user_id', str(user_id))
-        response.set_cookie('hash', hashh)
+        response.set_cookie('token', str(token))
 
 
 @users_api.route("/login", methods=['GET', 'POST'])
@@ -38,7 +42,8 @@ def login():
         row = g.cursor.fetchone()
         if row:
             user = models.User.from_dict(row)
-            set_userID(user.id)
+
+            gen_token(user.id)
             return redirect(url_for('index'))
         else:
             form.username.errors.append("Couple utilisateur/mot de passe inconnu")
@@ -67,7 +72,7 @@ def register():
             if "(email)" in str(e):
                 form.email.errors.append("Cet email est déjà utilisé par un autre utilisateur")
         else:
-            set_userID(user.id)
+            gen_token(user.id)
             return redirect(url_for('index'))
     return render_template('register.html', form=form)
 
@@ -89,11 +94,12 @@ def password():
     return render_template('edit_user.html', form=form)
 
 
-@users_api.route("/logout")
+@users_api.route("/logout", methods=["POST"])
 def logout():
-    user_id = get_userID()
+    token = get_token()
     resp = make_response(redirect(url_for('index')))
-    if user_id:
-        resp.set_cookie('user_id', "", expires=0)
-        resp.set_cookie('hash', "", expires=0)
+    if token:
+        querryDelToken = "DELETE FROM token WHERE token=%s"
+        g.cursor.execute(querryDelToken, [token])
+        resp.set_cookie('token', "", expires=0)
     return resp
